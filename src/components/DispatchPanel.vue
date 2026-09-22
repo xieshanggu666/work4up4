@@ -15,6 +15,9 @@
       <button :class="{ active: tab === 'repair' }" @click="tab = 'repair'">
         🔧 道路抢修<span v-if="repair.activeOrders.length" class="badge orange">{{ repair.activeOrders.length }}</span>
       </button>
+      <button :class="{ active: tab === 'replay' }" @click="tab = 'replay'">
+        🕘 历史复盘<span v-if="replay.journal.length" class="badge">{{ replay.journal.length }}</span>
+      </button>
     </div>
 
     <template v-if="tab === 'single'">
@@ -186,6 +189,9 @@
 
     <!-- 道路抢修工单 -->
     <RepairPanel v-else-if="tab === 'repair'" />
+
+    <!-- 历史复盘回放 -->
+    <ReplayPanel v-else-if="tab === 'replay'" />
   </div>
 </template>
 
@@ -195,16 +201,19 @@ import { useCommandStore, dispatchParts } from '@/store/command'
 import { useTransferStore } from '@/store/transfer'
 import { useRoadblockStore } from '@/store/roadblock'
 import { useRepairStore } from '@/store/repair'
+import { useReplayStore } from '@/store/replay'
 import { RESOURCE_TYPES } from '@/mock/data'
 import PlanPanel from '@/components/PlanPanel.vue'
 import TransferPanel from '@/components/TransferPanel.vue'
 import RoadBlockPanel from '@/components/RoadBlockPanel.vue'
 import RepairPanel from '@/components/RepairPanel.vue'
+import ReplayPanel from '@/components/ReplayPanel.vue'
 
 const store = useCommandStore()
 const transfer = useTransferStore()
 const roadblock = useRoadblockStore()
 const repair = useRepairStore()
+const replay = useReplayStore()
 const tab = ref('single')
 const form = ref({ baseId: '', type: 'personnel', qty: 0 })
 

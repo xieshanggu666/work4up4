@@ -9,6 +9,7 @@
 
       <main class="center">
         <MapBoard />
+        <ReplayBar />
       </main>
 
       <aside class="right">
@@ -30,17 +31,21 @@ import { useCommandStore } from '@/store/command'
 import { useTransferStore } from '@/store/transfer'
 import { useRoadblockStore } from '@/store/roadblock'
 import { useRepairStore } from '@/store/repair'
+import { useReplayStore } from '@/store/replay'
 import CommandHeader from '@/components/CommandHeader.vue'
 import EventList from '@/components/EventList.vue'
 import MapBoard from '@/components/MapBoard.vue'
 import DispatchPanel from '@/components/DispatchPanel.vue'
 import EventDetail from '@/components/EventDetail.vue'
+import ReplayBar from '@/components/ReplayBar.vue'
 
 const store = useCommandStore()
 const transfer = useTransferStore()
 const roadblock = useRoadblockStore()
 const repair = useRepairStore()
+const replay = useReplayStore()
 onMounted(() => {
+  replay.init() // 先挂载复盘记账订阅，再载入场景（初始节点自动落账）
   store.loadScenario(store.scenarioId)
   transfer.load()
   repair.load()
