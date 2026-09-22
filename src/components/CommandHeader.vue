@@ -14,6 +14,8 @@
         v-for="s in scenarios"
         :key="s.id"
         :class="{ active: store.scenarioId === s.id }"
+        :disabled="replay.mode === 'review'"
+        :title="replay.mode === 'review' ? '复盘回放中，先从某节点恢复演练或回到当前态势' : ''"
         @click="store.loadScenario(s.id)"
       >{{ s.name }}</button>
     </div>
@@ -77,13 +79,24 @@
     <!-- 时钟与实时开关 -->
     <div class="right">
       <div class="clock">{{ now }}</div>
-      <button
-        class="autoplay"
-        :class="{ on: store.autoPlay }"
-        @click="store.autoPlay ? store.stopAutoPlay() : store.startAutoPlay()"
-      >
-        {{ store.autoPlay ? '⏹ 实时模拟' : '▶ 实时模拟' }}
-      </button>
+      <div class="head-actions">
+        <button
+          class="replay-btn"
+          :class="{ reviewing: replay.mode === 'review' }"
+          :disabled="!replay.active || !replay.frameCount"
+          @click="openReplay"
+        >
+          📼 历史复盘
+        </button>
+        <button
+          class="autoplay"
+          :class="{ on: store.autoPlay }"
+          :disabled="replay.mode === 'review'"
+          @click="store.autoPlay ? store.stopAutoPlay() : store.startAutoPlay()"
+        >
+          {{ store.autoPlay ? '⏹ 实时模拟' : '▶ 实时模拟' }}
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -94,15 +107,23 @@ import { useCommandStore } from '@/store/command'
 import { useTransferStore } from '@/store/transfer'
 import { useRoadblockStore } from '@/store/roadblock'
 import { useRepairStore } from '@/store/repair'
+import { useReplayStore } from '@/store/replay'
 import { SCENARIOS } from '@/mock/data'
 
 const store = useCommandStore()
 const transfer = useTransferStore()
 const roadblock = useRoadblockStore()
 const repair = useRepairStore()
+const replay = useReplayStore()
 const scenarios = SCENARIOS
 const now = ref('')
 let timer = null
+
+// 复盘入口：回看中直接打开时间轴；演练中进入回放（定位最新节点，态势只读）
+function openReplay() {
+  if (replay.mode === 'review') replay.openPanel()
+  else replay.enterReview()
+}
 
 function tick() {
   now.value = new Date().toLocaleString('zh-CN', {
@@ -163,6 +184,21 @@ onBeforeUnmount(() => clearInterval(timer))
   font-family: 'Consolas', monospace; color: #7ef0c9; font-size: 15px;
   text-shadow: 0 0 8px rgba(126,240,201,0.5);
 }
+.head-actions { display: flex; gap: 6px; }
+.replay-btn {
+  background: linear-gradient(135deg, #1d3f8f, #2962ff);
+  border: 1px solid rgba(120,180,255,0.5);
+  color: #fff; font-size: 11px; border-radius: 6px; padding: 4px 12px;
+  cursor: pointer; box-shadow: 0 2px 8px rgba(41,98,255,0.35);
+}
+.replay-btn:hover { filter: brightness(1.12); }
+.replay-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.replay-btn.reviewing {
+  background: linear-gradient(135deg, #c77828, #e69100);
+  border-color: rgba(255,200,140,0.6);
+  animation: replayGlow 1.4s ease-in-out infinite;
+}
+@keyframes replayGlow { 50% { box-shadow: 0 2px 14px rgba(230,145,0,0.7); } }
 .autoplay {
   background: transparent; border: 1px dashed rgba(120,160,220,0.35);
   color: #8ea1c4; font-size: 11px; border-radius: 6px; padding: 4px 10px; cursor: pointer;

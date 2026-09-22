@@ -408,8 +408,13 @@ onBeforeUnmount(() => {
   map?.destroy()
 })
 
-// 数据变化时重绘
-watch(() => [store.filteredEvents.length, store.scenarioId], () => renderEvents())
+// 数据变化时重绘（事件状态/等级/位置/增删变化都需重绘——历史回放恢复快照同样走此通道）
+watch(
+  () => store.events.map((e) => e.id + e.status + e.severity + e.location.lng + e.location.lat).join(',')
+    + '|' + store.filter.type + store.filter.severity + store.filter.status + store.search
+    + '|' + store.scenarioId,
+  () => renderEvents()
+)
 watch(() => store.selectedEventId, (id) => {
   const ev = store.events.find((e) => e.id === id)
   if (ev && map) map.setFitView([], false, [100, 80, 120, 80])
@@ -435,9 +440,9 @@ watch(
   () => transfer.batches.reduce((sum, b) => sum + b.members.filter((x) => x.checkinAt && !x.checkoutAt).length, 0),
   () => renderShelters()
 )
-// 道路阻断：阻断区增删/状态变化 → 重绘；圈画草稿 → 预览；圈画模式 → 绑定地图事件
+// 道路阻断：阻断区增删/状态/封闭范围变化 → 重绘（历史回放恢复快照同样触发）
 watch(
-  () => roadblock.blocks.map((b) => b.id + b.status).join(','),
+  () => roadblock.blocks.map((b) => b.id + b.status + b.polygon.map((p) => p.join(',')).join(';')).join(','),
   () => renderBlocks()
 )
 // 抢修工单状态/进度变化 → 刷新阻断标记上的抢修角标
